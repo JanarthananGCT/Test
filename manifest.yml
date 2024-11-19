@@ -1,0 +1,210 @@
+permissions:
+  scopes:
+    - read:app-user-token
+    - read:app-system-token
+    - read:jira-work
+    - write:jira-work
+    - storage:app
+  external:
+    fetch:
+      backend:
+        - https://app.surveysparrow.com
+        - https://api.surveysparrow.com
+        - https://www.googleapis.com
+        - https://oauth2.googleapis.com
+        - https://accounts.google.com
+    images:
+      - https://appnest-app.salesparrow.com/SurveyMigrationTest-4119/version_1.0/icon/Color.png
+      - https://atlassian.design/static/LockClosed-c651d828718647b03f5d4799d705b7e39d1ead63004aca3617049d3f1c0bb357.png
+      - https://static.surveysparrow.com/site/assets/integrations/inner/microsoft/v2/create-and-share-chat-surveys-directly-from-teams.png
+      - https://developer.atlassian.com//console/assets/assets/SearchNoResults.ae017adfe3f389e4be72.svg
+
+providers:
+  auth:
+    - key: surveysparrow
+      name: SurveySparrow
+      scopes:
+        - 'view_contacts'
+        - 'view_question'
+        - 'manage_share'
+        - 'manage_survey_settings'
+        - 'manage_invite'
+        - 'view_contact_list'
+        - 'manage_devices'
+        - 'view_survey_integrations'
+        - 'manage_workspace'
+        - 'view_questions'
+        - view_reputation_app_platforms
+        - 'view_workspace'
+        - 'manage_contacts'
+        - 'view_invite'
+        - 'manage_contact_list'
+        - 'view_user'
+        - 'view_employees'
+        - 'view_team'
+        - 'manage_employees'
+        - 'manage_user'
+        - 'view_employee_list'
+        - 'manage_audit_logs'
+        - 'manage_employee_list'
+        - 'view_360_report'
+        - 'view_survey'
+        - 'view_targets'
+        - 'manage_survey'
+        - 'manage_team'
+        - 'view_survey_settings'
+        - 'view_ticket_fields'
+        - 'manage_question'
+        - 'view_audit_logs'
+        - 'view_custom_property'
+        - 'view_ticket_comments'
+        - 'view_expressions'
+        - 'view_tickets'
+        - 'manage_custom_property'
+        - 'manage_tickets'
+        - 'view_theme'
+        - 'manage_ticket_comments'
+        - 'manage_survey_share'
+        - 'create_dashboards'
+        - 'view_survey_responses'
+        - 'view_reputation_reviews'
+        - 'view_webhooks'
+        - 'view_dashboards'
+        - 'manage_responses'
+        - 'manage_webhooks'
+      clientId: 'cNJMiwtxZkiXLXsywPfStzlLuzPGoHmMBMyLt5rGHC4'
+      type: oauth2
+      remotes:
+        - surveysparrow-api
+      bearerMethod: authorization-header
+      actions:
+        authorization:
+          remote: surveysparrow-api
+          path: /o/oauth/auth
+          queryParameters:
+            client_id: 'cNJMiwtxZkiXLXsywPfStzlLuzPGoHmMBMyLt5rGHC4'
+            redirect_uri: 'https://id.atlassian.com/outboundAuth/finish'
+            scope: 'view_contacts+view_question+manage_share+manage_survey_settings+manage_invite+view_contact_list+manage_devices+view_survey_integrations+manage_workspace+view_questions+view_reputation_app_platforms+view_workspace+manage_contacts+view_invite+manage_contact_list+view_user+view_employees+view_team+manage_employees+manage_user+view_employee_list+manage_audit_logs+manage_employee_list+view_360_report+view_survey+view_targets+manage_survey+manage_team+view_survey_settings+view_ticket_fields+manage_question+view_audit_logs+view_custom_property+view_ticket_comments+view_expressions+view_tickets+manage_custom_property+manage_tickets+view_theme+manage_ticket_comments+manage_survey_share+create_dashboards+view_survey_responses+view_reputation_reviews+view_webhooks+view_dashboards+manage_responses+manage_webhooks'
+        exchange:
+          remote: surveysparrow-api
+          path: /o/oauth/token
+          resolvers:
+            accessToken: authed_user.access_token
+        retrieveProfile:
+          remote: surveysparrow-api
+          path: /v3/users
+          resolvers:
+            id: '1'
+            displayName: 'Jana'
+            avatarUrl: 'https://appnest-app.salesparrow.com/SurveyMigrationTest-4119/version_1.0/icon/Color.png'
+
+modules:
+  jira:customField:
+    - key: surveysparrow-custom-field
+      function: custom-field-handler
+      name: "SurveySparrow Survey"
+      description: "Links SurveySparrow surveys to Jira issues"
+      type: "string"
+      extraAttributes:
+        projectsActivatable: true
+      config:
+        contexts:
+          - addon_env: general
+            location: atl.jira.view.issue.right-panel
+        type: full
+      displayType: string
+  jira:issuePanel:
+    - key: surveysparrow-panel
+      function: macro-handler
+      title: "SurveySparrow"
+      description: "Display SurveySparrow surveys and responses"
+      icon: https://appnest-app.salesparrow.com/SurveyMigrationTest-4119/version_1.0/icon/Color.png
+      location: atl.jira.view.issue.right.context
+      renderMode: dynamic
+      weight: 100
+  jira:projectPage:
+    - key: seosparrow-hello-world-project-page
+      resource: main
+      resolver:
+        function: resolver
+      render: native
+      title: "Surveysparrow"
+      layout: basic
+  function:
+    - key: resolver
+      handler: index.handler
+      providers:
+        auth:
+          - surveysparrow
+    - key: macro-handler
+      handler: macro.handler
+    - key: custom-field-handler
+      handler: customField.handler
+    - key: event-handler
+      handler: eventHandler.handler
+    - key: create-ticket-handler
+      handler: createTicket.handler
+    - key: main
+      handler: oauth.handler
+    - key: oauth-handler
+      handler: oauth.handler
+  trigger:
+    - key: issue-created-trigger
+      function: event-handler
+      events:
+        - avi:jira:created:issue
+    - key: issue-updated-trigger
+      function: event-handler
+      events:
+        - avi:jira:updated:issue
+    - key: issue-deleted-trigger
+      function: event-handler
+      events:
+        - avi:jira:deleted:issue
+    - key: task-created-trigger
+      function: event-handler
+      events:
+        - avi:jira:created:task
+    - key: task-updated-trigger
+      function: event-handler
+      events:
+        - avi:jira:updated:task
+    - key: story-created-trigger
+      function: event-handler
+      events:
+        - avi:jira:created:story
+    - key: story-updated-trigger
+      function: event-handler
+      events:
+        - avi:jira:updated:story
+  webtrigger:
+    - key: create-ticket-webtrigger
+      function: create-ticket-handler
+    - key: oauth-callback
+      function: main
+
+resources:
+  - key: main
+    path: src/frontend/index.jsx
+  - key: logo
+    path: src/assets
+
+app:
+  id: ari:cloud:ecosystem::app/848a27cf-010b-4e41-8979-8fb5c994b73c
+  runtime:
+    name: nodejs20.x
+
+remotes:
+  - key: surveysparrow-api
+    baseUrl: https://api.surveysparrow.com
+    auth:
+      appUserToken:
+        enabled: true
+      appSystemToken:
+        enabled: true
+  - key: google-apis
+    baseUrl: https://www.googleapis.com
+  - key: google-account
+    baseUrl: https://accounts.google.com
+  - key: google-oauth
+    baseUrl: https://oauth2.googleapis.com
